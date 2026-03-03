@@ -7,12 +7,12 @@ metadata:
     app.kubernetes.io/name: leprechaun-api
     app.kubernetes.io/part-of: leprechaun
   annotations:
-    # Uncomment and adjust based on your ingress controller
-    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: leprechaun-headers@kubernetescrd
+    # For TLS with cert-manager:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - leprechaun.example.com
@@ -28,3 +28,22 @@ spec:
                 name: leprechaun-api
                 port:
                   number: 80
+---
+# Traefik Middleware for security headers
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: leprechaun-headers
+  namespace: leprechaun
+spec:
+  headers:
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    stsPreload: true
+    forceSTSHeader: true
+    customFrameOptionsValue: "SAMEORIGIN"
+    contentTypeNosniff: true
+    browserXssFilter: true
+    referrerPolicy: "strict-origin-when-cross-origin"
+    customResponseHeaders:
+      X-Robots-Tag: "noindex,nofollow"

@@ -6,10 +6,13 @@ metadata:
   namespace: {{ include "leprechaun.namespace" . }}
   labels:
     {{- include "leprechaun.apiLabels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    {{- if .Values.ingress.middleware.enabled }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ include "leprechaun.namespace" . }}-{{ include "leprechaun.fullname" . }}-headers@kubernetescrd
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
@@ -39,4 +42,25 @@ spec:
                   number: {{ $.Values.service.port }}
           {{- end }}
     {{- end }}
+---
+{{- if .Values.ingress.middleware.enabled }}
+# Traefik Middleware for security headers
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "leprechaun.fullname" . }}-headers
+  namespace: {{ include "leprechaun.namespace" . }}
+  labels:
+    {{- include "leprechaun.apiLabels" . | nindent 4 }}
+spec:
+  headers:
+    stsSeconds: {{ .Values.ingress.middleware.headers.stsSeconds | default 31536000 }}
+    stsIncludeSubdomains: {{ .Values.ingress.middleware.headers.stsIncludeSubdomains | default true }}
+    stsPreload: true
+    forceSTSHeader: {{ .Values.ingress.middleware.headers.forceSTSHeader | default true }}
+    customFrameOptionsValue: "SAMEORIGIN"
+    contentTypeNosniff: {{ .Values.ingress.middleware.headers.contentTypeNosniff | default true }}
+    browserXssFilter: {{ .Values.ingress.middleware.headers.browserXssFilter | default true }}
+    referrerPolicy: "strict-origin-when-cross-origin"
+{{- end }}
 {{- end }}

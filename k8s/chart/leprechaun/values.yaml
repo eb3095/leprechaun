@@ -31,8 +31,12 @@ service:
 
 ingress:
   enabled: true
-  className: nginx
-  annotations: {}
+  className: traefik
+  # Use Traefik IngressRoute CRD instead of standard Ingress
+  useIngressRoute: false
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
   hosts:
     - host: leprechaun.example.com
       paths:
@@ -42,6 +46,15 @@ ingress:
     - secretName: leprechaun-tls
       hosts:
         - leprechaun.example.com
+  # Traefik middleware for security headers
+  middleware:
+    enabled: true
+    headers:
+      stsSeconds: 31536000
+      stsIncludeSubdomains: true
+      forceSTSHeader: true
+      contentTypeNosniff: true
+      browserXssFilter: true
 
 resources:
   requests:

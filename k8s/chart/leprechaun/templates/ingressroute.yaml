@@ -1,0 +1,30 @@
+{{- if and .Values.ingress.enabled .Values.ingress.useIngressRoute }}
+# Traefik IngressRoute CRD (alternative to standard Ingress)
+# Enable with: ingress.useIngressRoute=true
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "leprechaun.fullname" . }}-api
+  namespace: {{ include "leprechaun.namespace" . }}
+  labels:
+    {{- include "leprechaun.apiLabels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`{{ (index .Values.ingress.hosts 0).host }}`)
+      kind: Rule
+      services:
+        - name: {{ include "leprechaun.fullname" . }}-api
+          port: {{ .Values.service.port }}
+      {{- if .Values.ingress.middleware.enabled }}
+      middlewares:
+        - name: {{ include "leprechaun.fullname" . }}-headers
+          namespace: {{ include "leprechaun.namespace" . }}
+      {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    secretName: {{ (index .Values.ingress.tls 0).secretName }}
+  {{- end }}
+{{- end }}

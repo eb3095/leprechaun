@@ -36,6 +36,22 @@ Leprechaun Trading Bot has been deployed!
    {{ include "leprechaun.redisName" . }}.{{ include "leprechaun.namespace" . }}.svc.cluster.local:6379
 {{- end }}
 
+{{- if .Values.ingress.enabled }}
+TRAEFIK INGRESS:
+  This chart uses Traefik v2 (k3s default) as the ingress controller.
+  {{- if .Values.ingress.useIngressRoute }}
+  Using: Traefik IngressRoute CRD
+  {{- else }}
+  Using: Standard Kubernetes Ingress with Traefik annotations
+  {{- end }}
+  {{- if .Values.ingress.middleware.enabled }}
+  Security headers middleware is enabled.
+  {{- end }}
+
+  To use Traefik's native IngressRoute CRD instead:
+    --set ingress.useIngressRoute=true
+{{- end }}
+
 IMPORTANT: Make sure to configure the following secrets:
 - ALPACA_API_KEY and ALPACA_API_SECRET for trading
 - REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET for Reddit sentiment
