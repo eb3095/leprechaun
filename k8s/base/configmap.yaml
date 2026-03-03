@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: leprechaun-config
+  namespace: leprechaun
+  labels:
+    app.kubernetes.io/name: leprechaun
+    app.kubernetes.io/part-of: leprechaun
+data:
+  FLASK_ENV: production
+  LOG_LEVEL: INFO
+  REDIS_URL: redis://leprechaun-redis.leprechaun.svc.cluster.local:6379/0
+  PROMETHEUS_METRICS_ENABLED: "true"
+  TZ: America/New_York

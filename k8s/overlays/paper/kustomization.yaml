@@ -1,0 +1,80 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: leprechaun
+
+resources:
+  - ../../base
+  - ../../mariadb
+
+namePrefix: paper-
+
+labels:
+  - pairs:
+      environment: paper
+    includeSelectors: false
+
+patches:
+  - target:
+      kind: Deployment
+      name: leprechaun-api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+  - target:
+      kind: ConfigMap
+      name: leprechaun-config
+    patch: |-
+      - op: replace
+        path: /data/FLASK_ENV
+        value: development
+      - op: replace
+        path: /data/LOG_LEVEL
+        value: DEBUG
+
+  - target:
+      kind: Secret
+      name: leprechaun-secrets
+    patch: |-
+      - op: replace
+        path: /stringData/ALPACA_PAPER
+        value: "true"
+
+  - target:
+      kind: MariaDB
+      name: leprechaun-db
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/replication/enabled
+        value: false
+      - op: replace
+        path: /spec/storage/size
+        value: 5Gi
+      - op: replace
+        path: /spec/resources/requests/cpu
+        value: 100m
+      - op: replace
+        path: /spec/resources/requests/memory
+        value: 256Mi
+      - op: replace
+        path: /spec/resources/limits/cpu
+        value: 500m
+      - op: replace
+        path: /spec/resources/limits/memory
+        value: 1Gi
+
+  - target:
+      kind: Ingress
+      name: leprechaun-api
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: leprechaun-paper.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: leprechaun-paper.example.com

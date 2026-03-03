@@ -1,0 +1,62 @@
+# Version control
+.git
+.gitignore
+
+# AI configuration
+.eca
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv
+.venv
+ENV
+env
+
+# Environment files
+.env
+.env.*
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+
+# Build artifacts
+*.egg-info
+dist
+build
+*.egg
+
+# Kubernetes
+k8s
+
+# Tests
+tests
+
+# Documentation (except README)
+docs
+*.md
+!README.md
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs

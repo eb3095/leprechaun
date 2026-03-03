@@ -1,0 +1,65 @@
+services:
+  leprechaun-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=mysql+pymysql://leprechaun:${MARIADB_PASSWORD:-leprechaun}@mariadb:3306/leprechaun
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - leprechaun-net
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11
+    ports:
+      - "3306:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD:-rootpassword}
+      - MARIADB_DATABASE=leprechaun
+      - MARIADB_USER=leprechaun
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-leprechaun}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - leprechaun-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+    networks:
+      - leprechaun-net
+    restart: unless-stopped
+
+volumes:
+  mariadb-data:
+  redis-data:
+
+networks:
+  leprechaun-net:
+    driver: bridge

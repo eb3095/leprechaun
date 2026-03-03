@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Search and Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Search Card -->
+        <div class="lg:col-span-2 bg-slate-800 rounded-xl p-6 border border-slate-700">
+            <h2 class="text-lg font-semibold mb-4">Symbol Lookup</h2>
+            <div class="flex space-x-3">
+                <div class="flex-1 relative">
+                    <input type="text" id="symbol-search" placeholder="Enter stock symbol (e.g., AAPL)" 
+                           class="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           onkeypress="if(event.key === 'Enter') searchSymbol()">
+                    <svg class="absolute left-3 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <button onclick="searchSymbol()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-sm font-medium rounded-lg transition-colors">
+                    Analyze
+                </button>
+            </div>
+            
+            <!-- Symbol Result -->
+            <div id="symbol-result" class="hidden mt-6">
+                <div class="bg-slate-700/50 rounded-lg p-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 id="result-symbol" class="text-2xl font-bold text-primary-400">--</h3>
+                            <p id="result-name" class="text-slate-400 mt-1">--</p>
+                        </div>
+                        <div id="manipulation-badge" class="hidden px-3 py-1.5 rounded-lg bg-yellow-900/50 text-yellow-400 text-sm font-medium">
+                            Manipulation Alert
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <!-- Sentiment Score -->
+                        <div>
+                            <p class="text-xs text-slate-400 mb-2">Sentiment Score</p>
+                            <div class="flex items-center">
+                                <div class="flex-1 h-4 bg-slate-600 rounded-full overflow-hidden">
+                                    <div id="sentiment-bar" class="h-full transition-all duration-500" style="width: 50%; background: linear-gradient(90deg, #ef4444 0%, #facc15 50%, #22c55e 100%)"></div>
+                                </div>
+                                <span id="sentiment-score" class="ml-3 font-bold">0.00</span>
+                            </div>
+                            <p id="sentiment-label" class="text-sm text-slate-400 mt-1">Neutral</p>
+                        </div>
+                        
+                        <!-- Manipulation Score -->
+                        <div>
+                            <p class="text-xs text-slate-400 mb-2">Manipulation Score</p>
+                            <div class="flex items-center">
+                                <div class="flex-1 h-4 bg-slate-600 rounded-full overflow-hidden">
+                                    <div id="manipulation-bar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <span id="manipulation-score" class="ml-3 font-bold">0.00</span>
+                            </div>
+                            <p id="manipulation-label" class="text-sm text-slate-400 mt-1">Low Risk</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-600">
+                        <div>
+                            <p class="text-xs text-slate-400">Mentions (24h)</p>
+                            <p id="result-mentions" class="text-lg font-semibold mt-1">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400">Velocity</p>
+                            <p id="result-velocity" class="text-lg font-semibold mt-1">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400">News Catalyst</p>
+                            <p id="result-news" class="text-lg font-semibold mt-1">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
+            <h2 class="text-lg font-semibold mb-4">Overview</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Stocks Tracked</span>
+                    <span id="stocks-tracked" class="font-semibold">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Active Signals</span>
+                    <span id="active-signals" class="font-semibold text-primary-400">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Manipulation Alerts</span>
+                    <span id="manipulation-alerts" class="font-semibold text-yellow-400">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Last Updated</span>
+                    <span id="sentiment-updated" class="font-semibold text-sm">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trending and Recent -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Trending Tickers -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Trending Tickers</h2>
+                <button onclick="refreshTrending()" class="text-sm text-primary-400 hover:text-primary-300 transition-colors">
+                    Refresh
+                </button>
+            </div>
+            <div id="trending-list" class="divide-y divide-slate-700 max-h-96 overflow-y-auto">
+                <div class="p-8 text-center text-slate-500">
+                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    <p>Loading trending data...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Mentions Feed -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Recent Mentions</h2>
+                <div class="flex items-center space-x-2">
+                    <select id="feed-source" onchange="refreshMentions()" class="px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded text-white">
+                        <option value="all">All Sources</option>
+                        <option value="reddit">Reddit</option>
+                        <option value="stocktwits">StockTwits</option>
+                        <option value="news">News</option>
+                    </select>
+                </div>
+            </div>
+            <div id="mentions-feed" class="divide-y divide-slate-700 max-h-96 overflow-y-auto">
+                <div class="p-8 text-center text-slate-500">
+                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <p>Loading recent mentions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Manipulation Alerts Table -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+            <h2 class="text-lg font-semibold">Potential Manipulation Alerts</h2>
+            <p class="text-sm text-slate-400 mt-1">Stocks with high manipulation probability detected by our algorithms</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-slate-700/50">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Symbol</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Manipulation Score</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Sentiment</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Divergence</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">News</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Signals</th>
+                    </tr>
+                </thead>
+                <tbody id="alerts-tbody" class="divide-y divide-slate-700">
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                            <p>No manipulation alerts at this time</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSentimentOverview();
+        loadTrendingTickers();
+        loadRecentMentions();
+        loadManipulationAlerts();
+        
+        // Refresh every 60 seconds
+        setInterval(function() {
+            loadTrendingTickers();
+            loadRecentMentions();
+        }, 60000);
+    });
+    
+    async function loadSentimentOverview() {
+        try {
+            const data = await apiCall('/api/v1/sentiment/overview');
+            if (data) {
+                document.getElementById('stocks-tracked').textContent = data.stocks_tracked || 0;
+                document.getElementById('active-signals').textContent = data.active_signals || 0;
+                document.getElementById('manipulation-alerts').textContent = data.manipulation_alerts || 0;
+                document.getElementById('sentiment-updated').textContent = data.last_updated ? formatTimeAgo(data.last_updated) : '--';
+            }
+        } catch (error) {
+            console.error('Error loading overview:', error);
+        }
+    }
+    
+    async function searchSymbol() {
+        const input = document.getElementById('symbol-search');
+        const symbol = input.value.trim().toUpperCase();
+        
+        if (!symbol) {
+            showToast('Please enter a symbol', 'warning');
+            return;
+        }
+        
+        try {
+            const data = await apiCall(`/api/v1/sentiment/${symbol}`);
+            if (data) {
+                displaySymbolResult(data);
+            }
+        } catch (error) {
+            showToast(`Symbol ${symbol} not found`, 'error');
+        }
+    }
+    
+    function displaySymbolResult(data) {
+        const resultDiv = document.getElementById('symbol-result');
+        resultDiv.classList.remove('hidden');
+        
+        document.getElementById('result-symbol').textContent = data.symbol;
+        document.getElementById('result-name').textContent = data.name || data.symbol;
+        
+        // Sentiment
+        const sentiment = data.sentiment_score || 0;
+        const sentimentPercent = ((sentiment + 1) / 2) * 100;
+        document.getElementById('sentiment-bar').style.width = sentimentPercent + '%';
+        document.getElementById('sentiment-score').textContent = sentiment.toFixed(2);
+        
+        const sentimentLabel = document.getElementById('sentiment-label');
+        if (sentiment > 0.2) {
+            sentimentLabel.textContent = 'Bullish';
+            sentimentLabel.className = 'text-sm text-green-400 mt-1';
+        } else if (sentiment < -0.2) {
+            sentimentLabel.textContent = 'Bearish';
+            sentimentLabel.className = 'text-sm text-red-400 mt-1';
+        } else {
+            sentimentLabel.textContent = 'Neutral';
+            sentimentLabel.className = 'text-sm text-slate-400 mt-1';
+        }
+        
+        // Manipulation
+        const manipulation = data.manipulation_score || 0;
+        document.getElementById('manipulation-bar').style.width = (manipulation * 100) + '%';
+        document.getElementById('manipulation-score').textContent = manipulation.toFixed(2);
+        
+        const manipLabel = document.getElementById('manipulation-label');
+        const manipBadge = document.getElementById('manipulation-badge');
+        if (manipulation > 0.7) {
+            manipLabel.textContent = 'High Risk';
+            manipLabel.className = 'text-sm text-red-400 mt-1';
+            manipBadge.classList.remove('hidden');
+        } else if (manipulation > 0.5) {
+            manipLabel.textContent = 'Medium Risk';
+            manipLabel.className = 'text-sm text-yellow-400 mt-1';
+            manipBadge.classList.add('hidden');
+        } else {
+            manipLabel.textContent = 'Low Risk';
+            manipLabel.className = 'text-sm text-green-400 mt-1';
+            manipBadge.classList.add('hidden');
+        }
+        
+        // Other stats
+        document.getElementById('result-mentions').textContent = data.mentions_24h || 0;
+        
+        const velocity = data.velocity || 0;
+        const velocityEl = document.getElementById('result-velocity');
+        velocityEl.textContent = (velocity >= 0 ? '+' : '') + velocity.toFixed(1) + '%';
+        velocityEl.className = `text-lg font-semibold mt-1 ${velocity >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        
+        const newsEl = document.getElementById('result-news');
+        newsEl.textContent = data.has_news_catalyst ? 'Yes' : 'No';
+        newsEl.className = `text-lg font-semibold mt-1 ${data.has_news_catalyst ? 'text-yellow-400' : 'text-slate-400'}`;
+    }
+    
+    async function loadTrendingTickers() {
+        try {
+            const data = await apiCall('/api/v1/sentiment/trending?limit=10');
+            if (data && data.trending) {
+                updateTrendingList(data.trending);
+            }
+        } catch (error) {
+            console.error('Error loading trending:', error);
+        }
+    }
+    
+    function updateTrendingList(trending) {
+        const container = document.getElementById('trending-list');
+        
+        if (!trending || trending.length === 0) {
+            container.innerHTML = `
+                <div class="p-8 text-center text-slate-500">
+                    <p>No trending data available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = trending.map((item, index) => {
+            const sentiment = item.sentiment_score || 0;
+            const isPositive = sentiment >= 0;
+            const hasAlert = (item.manipulation_score || 0) > 0.5;
+            
+            return `
+                <div class="p-4 hover:bg-slate-700/30 transition-colors cursor-pointer" onclick="document.getElementById('symbol-search').value='${item.symbol}'; searchSymbol();">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-lg font-bold text-slate-400">#${index + 1}</span>
+                            <div>
+                                <span class="font-bold text-primary-400">${item.symbol}</span>
+                                ${hasAlert ? '<span class="ml-2 px-1.5 py-0.5 text-xs bg-yellow-900/50 text-yellow-400 rounded">ALERT</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="${isPositive ? 'text-green-400' : 'text-red-400'} font-medium">
+                                ${isPositive ? '+' : ''}${(sentiment * 100).toFixed(1)}%
+                            </span>
+                            <p class="text-xs text-slate-500">${item.mentions || 0} mentions</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function refreshTrending() {
+        loadTrendingTickers();
+        showToast('Trending data refreshed', 'success');
+    }
+    
+    async function loadRecentMentions() {
+        const source = document.getElementById('feed-source').value;
+        const params = source !== 'all' ? `?source=${source}` : '';
+        
+        try {
+            const data = await apiCall(`/api/v1/sentiment/mentions${params}&limit=10`);
+            if (data && data.mentions) {
+                updateMentionsFeed(data.mentions);
+            }
+        } catch (error) {
+            console.error('Error loading mentions:', error);
+        }
+    }
+    
+    function refreshMentions() {
+        loadRecentMentions();
+    }
+    
+    function updateMentionsFeed(mentions) {
+        const container = document.getElementById('mentions-feed');
+        
+        if (!mentions || mentions.length === 0) {
+            container.innerHTML = `
+                <div class="p-8 text-center text-slate-500">
+                    <p>No recent mentions</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const sourceIcons = {
+            reddit: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>',
+            stocktwits: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
+            news: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>'
+        };
+        
+        const sourceColors = {
+            reddit: 'text-orange-400',
+            stocktwits: 'text-blue-400',
+            news: 'text-purple-400'
+        };
+        
+        container.innerHTML = mentions.map(mention => {
+            const sentiment = mention.sentiment || 0;
+            const sentimentColor = sentiment > 0 ? 'text-green-400' : sentiment < 0 ? 'text-red-400' : 'text-slate-400';
+            
+            return `
+                <div class="p-4 hover:bg-slate-700/30 transition-colors">
+                    <div class="flex items-start space-x-3">
+                        <div class="${sourceColors[mention.source] || 'text-slate-400'}">
+                            ${sourceIcons[mention.source] || '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-primary-400">${mention.symbol}</span>
+                                <span class="${sentimentColor} text-sm">${sentiment > 0 ? '+' : ''}${(sentiment * 100).toFixed(0)}%</span>
+                            </div>
+                            <p class="text-sm text-slate-300 mt-1 line-clamp-2">${mention.text || mention.title || 'No content available'}</p>
+                            <p class="text-xs text-slate-500 mt-1">${formatTimeAgo(mention.timestamp)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    async function loadManipulationAlerts() {
+        try {
+            const data = await apiCall('/api/v1/manipulation/alerts');
+            if (data && data.alerts) {
+                updateAlertsTable(data.alerts);
+            }
+        } catch (error) {
+            console.error('Error loading manipulation alerts:', error);
+        }
+    }
+    
+    function updateAlertsTable(alerts) {
+        const tbody = document.getElementById('alerts-tbody');
+        
+        if (!alerts || alerts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                        <p>No manipulation alerts at this time</p>
+                        <p class="text-sm mt-1">The system is actively monitoring for suspicious activity</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = alerts.map(alert => {
+            const manipScore = alert.manipulation_score || 0;
+            const sentiment = alert.sentiment_score || 0;
+            const divergence = alert.divergence_score || 0;
+            
+            return `
+                <tr class="hover:bg-slate-700/30 transition-colors">
+                    <td class="px-4 py-4">
+                        <span class="font-bold text-primary-400">${alert.symbol}</span>
+                    </td>
+                    <td class="px-4 py-4 text-right">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-sm font-medium ${manipScore > 0.7 ? 'bg-red-900/50 text-red-400' : 'bg-yellow-900/50 text-yellow-400'}">
+                            ${(manipScore * 100).toFixed(0)}%
+                        </span>
+                    </td>
+                    <td class="px-4 py-4 text-right ${sentiment >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        ${sentiment >= 0 ? '+' : ''}${(sentiment * 100).toFixed(1)}%
+                    </td>
+                    <td class="px-4 py-4 text-right text-slate-300">
+                        ${(divergence * 100).toFixed(1)}%
+                    </td>
+                    <td class="px-4 py-4 text-center">
+                        ${alert.has_news_catalyst 
+                            ? '<span class="px-2 py-0.5 text-xs bg-green-900/50 text-green-400 rounded">Yes</span>' 
+                            : '<span class="px-2 py-0.5 text-xs bg-slate-700 text-slate-400 rounded">No</span>'}
+                    </td>
+                    <td class="px-4 py-4">
+                        <div class="flex flex-wrap gap-1">
+                            ${(alert.triggered_signals || []).slice(0, 3).map(sig => 
+                                `<span class="px-1.5 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">${sig}</span>`
+                            ).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+</script>
+{% endblock %}

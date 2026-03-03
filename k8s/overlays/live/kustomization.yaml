@@ -1,0 +1,89 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: leprechaun
+
+resources:
+  - ../../base
+  - ../../mariadb
+
+namePrefix: live-
+
+labels:
+  - pairs:
+      environment: live
+    includeSelectors: false
+
+patches:
+  - target:
+      kind: Deployment
+      name: leprechaun-api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 200m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 512Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: 1000m
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 2Gi
+
+  - target:
+      kind: ConfigMap
+      name: leprechaun-config
+    patch: |-
+      - op: replace
+        path: /data/FLASK_ENV
+        value: production
+      - op: replace
+        path: /data/LOG_LEVEL
+        value: WARNING
+
+  - target:
+      kind: Secret
+      name: leprechaun-secrets
+    patch: |-
+      - op: replace
+        path: /stringData/ALPACA_PAPER
+        value: "false"
+
+  - target:
+      kind: MariaDB
+      name: leprechaun-db
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+      - op: replace
+        path: /spec/storage/size
+        value: 50Gi
+      - op: replace
+        path: /spec/resources/requests/cpu
+        value: 500m
+      - op: replace
+        path: /spec/resources/requests/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/resources/limits/cpu
+        value: 2000m
+      - op: replace
+        path: /spec/resources/limits/memory
+        value: 4Gi
+
+  - target:
+      kind: Ingress
+      name: leprechaun-api
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: leprechaun.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: leprechaun.example.com

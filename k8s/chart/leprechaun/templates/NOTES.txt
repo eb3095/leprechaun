@@ -1,0 +1,62 @@
+Leprechaun Trading Bot has been deployed!
+
+{{- if .Values.ingress.enabled }}
+1. Access the application via:
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+1. Get the application URL by running:
+   export NODE_PORT=$(kubectl get --namespace {{ include "leprechaun.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "leprechaun.fullname" . }}-api)
+   export NODE_IP=$(kubectl get nodes --namespace {{ include "leprechaun.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+1. Get the application URL by running:
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+   kubectl get --namespace {{ include "leprechaun.namespace" . }} svc {{ include "leprechaun.fullname" . }}-api -w
+{{- else if contains "ClusterIP" .Values.service.type }}
+1. Access the application by running:
+   kubectl --namespace {{ include "leprechaun.namespace" . }} port-forward svc/{{ include "leprechaun.fullname" . }}-api {{ .Values.service.port }}:{{ .Values.service.port }}
+   Then visit http://localhost:{{ .Values.service.port }}
+{{- end }}
+
+2. Check the deployment status:
+   kubectl --namespace {{ include "leprechaun.namespace" . }} get deployments
+
+3. View application logs:
+   kubectl --namespace {{ include "leprechaun.namespace" . }} logs -l app.kubernetes.io/name={{ include "leprechaun.name" . }},app.kubernetes.io/component=api -f
+
+4. Check pod health:
+   kubectl --namespace {{ include "leprechaun.namespace" . }} get pods -l app.kubernetes.io/name={{ include "leprechaun.name" . }}
+
+{{- if .Values.redis.enabled }}
+5. Redis is running at:
+   {{ include "leprechaun.redisName" . }}.{{ include "leprechaun.namespace" . }}.svc.cluster.local:6379
+{{- end }}
+
+IMPORTANT: Make sure to configure the following secrets:
+- ALPACA_API_KEY and ALPACA_API_SECRET for trading
+- REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET for Reddit sentiment
+- FINNHUB_API_KEY for market data
+- DISCORD_WEBHOOK_URL for notifications
+- JWT_SECRET_KEY for API authentication
+
+For paper trading mode, set:
+  --set secrets.alpacaPaper=true
+
+For live trading mode, set:
+  --set secrets.alpacaPaper=false
+
+Example deployment commands:
+
+Paper trading:
+  helm upgrade --install leprechaun-paper ./k8s/chart/leprechaun -f ./k8s/chart/leprechaun/values-paper.yaml \
+    --set secrets.alpacaApiKey=YOUR_KEY \
+    --set secrets.alpacaApiSecret=YOUR_SECRET
+
+Live trading:
+  helm upgrade --install leprechaun-live ./k8s/chart/leprechaun -f ./k8s/chart/leprechaun/values-live.yaml \
+    --set secrets.alpacaApiKey=YOUR_KEY \
+    --set secrets.alpacaApiSecret=YOUR_SECRET

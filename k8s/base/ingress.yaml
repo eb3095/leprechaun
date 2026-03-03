@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: leprechaun-api
+  namespace: leprechaun
+  labels:
+    app.kubernetes.io/name: leprechaun-api
+    app.kubernetes.io/part-of: leprechaun
+  annotations:
+    # Uncomment and adjust based on your ingress controller
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - leprechaun.example.com
+      secretName: leprechaun-tls
+  rules:
+    - host: leprechaun.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: leprechaun-api
+                port:
+                  number: 80

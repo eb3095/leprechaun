@@ -1,0 +1,30 @@
+replicaCount: 1
+
+config:
+  flaskEnv: development
+  logLevel: DEBUG
+
+secrets:
+  alpacaPaper: "true"
+
+ingress:
+  hosts:
+    - host: leprechaun-paper.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: leprechaun-paper-tls
+      hosts:
+        - leprechaun-paper.example.com
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false

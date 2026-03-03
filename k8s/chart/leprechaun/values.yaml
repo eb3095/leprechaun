@@ -1,0 +1,137 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/together/leprechaun
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+namespace:
+  create: true
+  name: leprechaun
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+containerSecurityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: leprechaun.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: leprechaun-tls
+      hosts:
+        - leprechaun.example.com
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+config:
+  flaskEnv: production
+  logLevel: INFO
+  timezone: America/New_York
+  prometheusMetricsEnabled: "true"
+
+database:
+  host: leprechaun-db-primary.leprechaun.svc.cluster.local
+  port: "3306"
+  name: leprechaun
+  existingSecret: mariadb-user
+  usernameKey: username
+  passwordKey: password
+
+secrets:
+  create: true
+  alpacaApiKey: ""
+  alpacaApiSecret: ""
+  alpacaPaper: "true"
+  redditClientId: ""
+  redditClientSecret: ""
+  redditUserAgent: "leprechaun-bot/1.0"
+  finnhubApiKey: ""
+  rapidapiKey: ""
+  discordWebhookUrl: ""
+  jwtSecretKey: ""
+
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+  livenessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 20
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+mariadb:
+  enabled: false

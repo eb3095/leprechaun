@@ -1,0 +1,13 @@
+services:
+  leprechaun-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./src:/app/src:ro
+      - ./web:/app/web:ro
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    command: ["python", "-m", "flask", "run", "--host", "0.0.0.0", "--port", "8000", "--reload"]

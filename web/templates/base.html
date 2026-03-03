@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Leprechaun Trading Bot Dashboard">
+    <meta name="theme-color" content="#0f172a">
+    
+    <title>{% block title %}{{ page_title }} | Leprechaun{% endblock %}</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('web.static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('web.static', filename='icons/icon-192.png') }}">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('web.static', filename='css/styles.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-slate-900 text-slate-100">
+    <div id="app" class="min-h-full">
+        <!-- Mobile menu overlay -->
+        <div id="mobile-menu-overlay" class="fixed inset-0 z-40 bg-black/50 hidden lg:hidden" onclick="toggleMobileMenu()"></div>
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center h-16 px-6 bg-slate-900">
+                    <span class="text-2xl mr-2">🍀</span>
+                    <span class="text-xl font-bold text-primary-400">Leprechaun</span>
+                </div>
+                
+                <!-- Bot Status -->
+                <div class="px-4 py-3 border-b border-slate-700">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-400">Bot Status</span>
+                        <span id="bot-status-badge" class="px-2 py-1 text-xs font-medium rounded-full bg-slate-600 text-slate-300">
+                            Loading...
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+                    <a href="{{ url_for('web.dashboard') }}" 
+                       class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'dashboard' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    
+                    <a href="{{ url_for('web.positions') }}"
+                       class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'positions' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        Positions
+                    </a>
+                    
+                    <a href="{{ url_for('web.trades') }}"
+                       class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'trades' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        Trade History
+                    </a>
+                    
+                    <a href="{{ url_for('web.sentiment') }}"
+                       class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'sentiment' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Sentiment
+                    </a>
+                    
+                    <a href="{{ url_for('web.alerts') }}"
+                       class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'alerts' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        Alerts
+                    </a>
+                    
+                    <div class="pt-4 mt-4 border-t border-slate-700">
+                        <a href="{{ url_for('web.settings') }}"
+                           class="nav-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ 'bg-slate-700 text-white' if active_page == 'settings' else 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            Settings
+                        </a>
+                    </div>
+                </nav>
+                
+                <!-- User section -->
+                <div class="p-4 border-t border-slate-700">
+                    <div id="user-section" class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
+                                <span id="user-initial" class="text-sm font-medium">?</span>
+                            </div>
+                            <span id="username-display" class="ml-3 text-sm font-medium text-slate-300">Guest</span>
+                        </div>
+                        <button onclick="handleLogout()" class="text-slate-400 hover:text-white transition-colors" title="Logout">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main content -->
+        <div class="lg:pl-64">
+            <!-- Top bar -->
+            <header class="sticky top-0 z-30 h-16 bg-slate-800/95 backdrop-blur border-b border-slate-700">
+                <div class="flex items-center justify-between h-full px-4 sm:px-6">
+                    <div class="flex items-center">
+                        <!-- Mobile menu button -->
+                        <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+                        <h1 class="ml-2 lg:ml-0 text-lg font-semibold">{{ page_title }}</h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Market status -->
+                        <div class="hidden sm:flex items-center">
+                            <span id="market-status-dot" class="w-2 h-2 rounded-full bg-slate-500 mr-2"></span>
+                            <span id="market-status-text" class="text-sm text-slate-400">Market Closed</span>
+                        </div>
+                        
+                        <!-- Last updated -->
+                        <span id="last-updated" class="hidden md:block text-xs text-slate-500">
+                            Updated: --:--
+                        </span>
+                        
+                        <!-- Refresh button -->
+                        <button onclick="refreshData()" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="Refresh">
+                            <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Flash messages -->
+            <div id="flash-messages" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message flex items-center p-4 rounded-lg shadow-lg {{ 'bg-green-900/90 text-green-100' if category == 'success' else 'bg-red-900/90 text-red-100' if category == 'error' else 'bg-slate-700/90 text-slate-100' }}">
+                                <span>{{ message }}</span>
+                                <button onclick="this.parentElement.remove()" class="ml-4 text-current opacity-70 hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <!-- Page content -->
+            <main class="p-4 sm:p-6">
+                {% block content %}{% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            <footer class="px-4 sm:px-6 py-4 border-t border-slate-800 text-center text-xs text-slate-500">
+                <p>Leprechaun Trading Bot &copy; {{ now().year if now is defined else '2026' }} | Paper Trading Mode</p>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Scripts -->
+    <script src="{{ url_for('web.static', filename='js/main.js') }}"></script>
+    <script>
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+        
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+        
+        // Close mobile menu on resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobile-menu-overlay');
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

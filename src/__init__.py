@@ -1,0 +1,1 @@
+"""Leprechaun stock trading bot."""

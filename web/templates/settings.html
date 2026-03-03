@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Trading Parameters -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+            <h2 class="text-lg font-semibold">Trading Parameters</h2>
+            <p class="text-sm text-slate-400 mt-1">Configure risk management and profit targets</p>
+        </div>
+        <div class="p-6">
+            <form id="trading-params-form" onsubmit="saveTradingParams(event)" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Profit Target (%)</label>
+                        <input type="number" id="profit-target" step="0.1" min="0.1" max="10" 
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="2.5">
+                        <p class="text-xs text-slate-500 mt-1">Exit position when profit reaches this percentage</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Stop Loss (%)</label>
+                        <input type="number" id="stop-loss" step="0.1" min="0.1" max="10"
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="1.25">
+                        <p class="text-xs text-slate-500 mt-1">Exit position when loss reaches this percentage</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Position Risk (%)</label>
+                        <input type="number" id="position-risk" step="0.1" min="0.1" max="5"
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="1.0">
+                        <p class="text-xs text-slate-500 mt-1">Maximum account risk per position</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Max Positions</label>
+                        <input type="number" id="max-positions" step="1" min="1" max="20"
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="5">
+                        <p class="text-xs text-slate-500 mt-1">Maximum number of concurrent positions</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Daily Loss Limit (%)</label>
+                        <input type="number" id="daily-loss-limit" step="0.1" min="0.5" max="10"
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="2.0">
+                        <p class="text-xs text-slate-500 mt-1">Halt trading when daily loss exceeds this</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Weekly Loss Limit (%)</label>
+                        <input type="number" id="weekly-loss-limit" step="0.1" min="1" max="20"
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="5.0">
+                        <p class="text-xs text-slate-500 mt-1">Halt trading when weekly loss exceeds this</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-sm font-medium rounded-lg transition-colors">
+                        Save Trading Parameters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Alert Configuration -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+            <h2 class="text-lg font-semibold">Alert Configuration</h2>
+            <p class="text-sm text-slate-400 mt-1">Configure Discord and push notification settings</p>
+        </div>
+        <div class="p-6">
+            <form id="alert-config-form" onsubmit="saveAlertConfig(event)" class="space-y-6">
+                <!-- Discord Settings -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-slate-300 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                        </svg>
+                        Discord Settings
+                    </h3>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-slate-300">Enable Discord Alerts</label>
+                            <p class="text-xs text-slate-500">Send alerts to Discord webhook</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="discord-enabled" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Discord Webhook URL</label>
+                        <input type="url" id="discord-webhook" placeholder="https://discord.com/api/webhooks/..."
+                               class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <button type="button" onclick="testDiscord()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-sm font-medium rounded-lg transition-colors">
+                            Test Webhook
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Alert Types -->
+                <div class="space-y-4 pt-4 border-t border-slate-700">
+                    <h3 class="text-sm font-semibold text-slate-300">Alert Types</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" id="alert-trades" class="w-4 h-4 rounded bg-slate-600 border-slate-500 text-primary-500 focus:ring-primary-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-300">Trade Notifications</span>
+                                <p class="text-xs text-slate-500">When positions are opened/closed</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" id="alert-halts" class="w-4 h-4 rounded bg-slate-600 border-slate-500 text-primary-500 focus:ring-primary-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-300">Halt Notifications</span>
+                                <p class="text-xs text-slate-500">When trading is halted/resumed</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" id="alert-signals" class="w-4 h-4 rounded bg-slate-600 border-slate-500 text-primary-500 focus:ring-primary-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-300">Signal Alerts</span>
+                                <p class="text-xs text-slate-500">High-confidence trading signals</p>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" id="alert-daily" class="w-4 h-4 rounded bg-slate-600 border-slate-500 text-primary-500 focus:ring-primary-500">
+                            <div>
+                                <span class="text-sm font-medium text-slate-300">Daily Summary</span>
+                                <p class="text-xs text-slate-500">End of day performance summary</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-sm font-medium rounded-lg transition-colors">
+                        Save Alert Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- API Status -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+            <h2 class="text-lg font-semibold">API Connections</h2>
+            <p class="text-sm text-slate-400 mt-1">Status of external service connections</p>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div id="alpaca-status-dot" class="w-3 h-3 rounded-full bg-slate-500"></div>
+                        <div>
+                            <span class="font-medium">Alpaca Trading</span>
+                            <p class="text-xs text-slate-500">Paper trading account</p>
+                        </div>
+                    </div>
+                    <span id="alpaca-status" class="text-sm text-slate-400">Checking...</span>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div id="reddit-status-dot" class="w-3 h-3 rounded-full bg-slate-500"></div>
+                        <div>
+                            <span class="font-medium">Reddit API</span>
+                            <p class="text-xs text-slate-500">Sentiment data source</p>
+                        </div>
+                    </div>
+                    <span id="reddit-status" class="text-sm text-slate-400">Checking...</span>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div id="finnhub-status-dot" class="w-3 h-3 rounded-full bg-slate-500"></div>
+                        <div>
+                            <span class="font-medium">Finnhub</span>
+                            <p class="text-xs text-slate-500">News and sentiment API</p>
+                        </div>
+                    </div>
+                    <span id="finnhub-status" class="text-sm text-slate-400">Checking...</span>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div id="db-status-dot" class="w-3 h-3 rounded-full bg-slate-500"></div>
+                        <div>
+                            <span class="font-medium">Database</span>
+                            <p class="text-xs text-slate-500">MariaDB connection</p>
+                        </div>
+                    </div>
+                    <span id="db-status" class="text-sm text-slate-400">Checking...</span>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button onclick="checkApiStatus()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-sm font-medium rounded-lg transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Refresh Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+        checkApiStatus();
+    });
+    
+    async function loadSettings() {
+        try {
+            const data = await apiCall('/api/v1/admin/config');
+            if (data) {
+                // Trading params
+                if (data.trading) {
+                    document.getElementById('profit-target').value = data.trading.profit_target || 2.5;
+                    document.getElementById('stop-loss').value = data.trading.stop_loss || 1.25;
+                    document.getElementById('position-risk').value = data.trading.position_risk || 1.0;
+                    document.getElementById('max-positions').value = data.trading.max_positions || 5;
+                    document.getElementById('daily-loss-limit').value = data.trading.daily_loss_limit || 2.0;
+                    document.getElementById('weekly-loss-limit').value = data.trading.weekly_loss_limit || 5.0;
+                }
+                
+                // Alert settings
+                if (data.alerts) {
+                    document.getElementById('discord-enabled').checked = data.alerts.discord_enabled || false;
+                    document.getElementById('discord-webhook').value = data.alerts.discord_webhook || '';
+                    document.getElementById('alert-trades').checked = data.alerts.notify_trades !== false;
+                    document.getElementById('alert-halts').checked = data.alerts.notify_halts !== false;
+                    document.getElementById('alert-signals').checked = data.alerts.notify_signals || false;
+                    document.getElementById('alert-daily').checked = data.alerts.notify_daily || false;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+    
+    async function saveTradingParams(event) {
+        event.preventDefault();
+        
+        const params = {
+            profit_target: parseFloat(document.getElementById('profit-target').value),
+            stop_loss: parseFloat(document.getElementById('stop-loss').value),
+            position_risk: parseFloat(document.getElementById('position-risk').value),
+            max_positions: parseInt(document.getElementById('max-positions').value),
+            daily_loss_limit: parseFloat(document.getElementById('daily-loss-limit').value),
+            weekly_loss_limit: parseFloat(document.getElementById('weekly-loss-limit').value)
+        };
+        
+        try {
+            const result = await apiCall('/api/v1/admin/config/trading', {
+                method: 'PUT',
+                body: JSON.stringify(params)
+            });
+            
+            if (result) {
+                showToast('Trading parameters saved', 'success');
+            }
+        } catch (error) {
+            showToast('Failed to save parameters', 'error');
+        }
+    }
+    
+    async function saveAlertConfig(event) {
+        event.preventDefault();
+        
+        const config = {
+            discord_enabled: document.getElementById('discord-enabled').checked,
+            discord_webhook: document.getElementById('discord-webhook').value,
+            notify_trades: document.getElementById('alert-trades').checked,
+            notify_halts: document.getElementById('alert-halts').checked,
+            notify_signals: document.getElementById('alert-signals').checked,
+            notify_daily: document.getElementById('alert-daily').checked
+        };
+        
+        try {
+            const result = await apiCall('/api/v1/alerts/settings', {
+                method: 'PUT',
+                body: JSON.stringify(config)
+            });
+            
+            if (result) {
+                showToast('Alert settings saved', 'success');
+            }
+        } catch (error) {
+            showToast('Failed to save settings', 'error');
+        }
+    }
+    
+    async function testDiscord() {
+        const webhook = document.getElementById('discord-webhook').value;
+        
+        if (!webhook) {
+            showToast('Please enter a webhook URL first', 'warning');
+            return;
+        }
+        
+        try {
+            const result = await apiCall('/api/v1/alerts/test', {
+                method: 'POST',
+                body: JSON.stringify({ channel: 'discord' })
+            });
+            
+            if (result && result.success) {
+                showToast('Test message sent to Discord', 'success');
+            } else {
+                showToast('Failed to send test message', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to send test message', 'error');
+        }
+    }
+    
+    async function checkApiStatus() {
+        try {
+            const data = await apiCall('/api/v1/admin/health');
+            if (data && data.services) {
+                updateServiceStatus('alpaca', data.services.alpaca);
+                updateServiceStatus('reddit', data.services.reddit);
+                updateServiceStatus('finnhub', data.services.finnhub);
+                updateServiceStatus('db', data.services.database);
+            }
+        } catch (error) {
+            console.error('Error checking API status:', error);
+        }
+    }
+    
+    function updateServiceStatus(service, status) {
+        const dot = document.getElementById(`${service}-status-dot`);
+        const text = document.getElementById(`${service}-status`);
+        
+        if (status && status.connected) {
+            dot.className = 'w-3 h-3 rounded-full bg-green-500';
+            text.textContent = 'Connected';
+            text.className = 'text-sm text-green-400';
+        } else {
+            dot.className = 'w-3 h-3 rounded-full bg-red-500';
+            text.textContent = status?.error || 'Disconnected';
+            text.className = 'text-sm text-red-400';
+        }
+    }
+</script>
+{% endblock %}

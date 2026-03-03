@@ -1,0 +1,76 @@
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: leprechaun-db
+  namespace: leprechaun
+  labels:
+    app.kubernetes.io/name: leprechaun-db
+    app.kubernetes.io/part-of: leprechaun
+    app.kubernetes.io/component: database
+spec:
+  rootPasswordSecretKeyRef:
+    name: mariadb-root
+    key: password
+
+  database: leprechaun
+  username: leprechaun
+  passwordSecretKeyRef:
+    name: mariadb-user
+    key: password
+
+  replicas: 3
+
+  replication:
+    enabled: true
+    primary:
+      podIndex: 0
+      automaticFailover: true
+
+  storage:
+    size: 20Gi
+    storageClassName: standard
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  myCnf: |
+    [mariadb]
+    bind-address=*
+    default_storage_engine=InnoDB
+    binlog_format=row
+    innodb_autoinc_lock_mode=2
+    max_allowed_packet=256M
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_unicode_ci
+
+  metrics:
+    enabled: true
+    exporter:
+      image: prom/mysqld-exporter:v0.15.1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+  podSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: leprechaun-db
+            topologyKey: kubernetes.io/hostname

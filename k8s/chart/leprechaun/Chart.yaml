@@ -1,0 +1,13 @@
+apiVersion: v2
+name: leprechaun
+description: AI-powered stock trading bot with sentiment analysis
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - trading
+  - stocks
+  - sentiment
+  - ai
+maintainers:
+  - name: Leprechaun Team
